@@ -16,8 +16,7 @@ class CategorieController extends AbstractController
     #[Route('/categories/liste', name: 'categories')]
     public function index(PersistenceManagerRegistry $doctrine): Response
     {
-        $entityManager = $doctrine->getManager();
-        $categories = $entityManager->getRepository(Categorie::class)->findAll();
+        $categories = $doctrine->getManager()->getRepository(Categorie::class)->findAll();
         return $this->render('categorie/liste_categories.html.twig', [
             'categories' => $categories,
         ]);
@@ -37,23 +36,42 @@ class CategorieController extends AbstractController
             $entityManager->persist($categorie);
             $entityManager->flush();
 
-            return $this->redirectToRoute('/categories/nouvelle'); // A modifier
+            return $this->redirectToRoute('categories'); // A modifier
         }
 
         return $this->render("categorie/nouvelle_categorie.html.twig", ["form" => $form,]);
    }
 
-   #[Route('/categories/{id}')]
+   #[Route('/categories/afficher/{id}', name:'afficher_categorie_avec_id')]
     public function show(PersistenceManagerRegistry $doctrine, int $id): Response
     {
-        $entityManager = $doctrine->getManager();
-        $categorie = $entityManager->getRepository(Categorie::class)->find($id);
+        $categorie =$doctrine->getManager()->getRepository(Categorie::class)->find($id);
 
         if (!$categorie) {
             return $this->render('categorie/categorie_non_trouve.html.twig');
         }
 
         return $this->render('categorie/categorie_trouve.html.twig', ['categorie' => $categorie]);
+    }
+
+    #[Route('/categories/modifier/{id}', name:'modifier_categorie_avec_id')]
+    public function update(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
+    {
+        $categorie = $doctrine->getManager()->getRepository(Categorie::class)->find($id);
+
+        if(!$categorie){
+            return $this->render('categorie/categorie_non_trouve.html.twig');
+        }
+
+        $form = $this->createForm(CategorieType::class, $categorie);
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid()) {
+            $doctrine->getManager()->flush();
+            return $this->redirectToRoute('afficher_categorie_avec_id', ['id' => $categorie->getId()]);
+        }
+
+        return $this->render("categorie/modifier_categorie.html.twig", ["form" => $form,]);
     }
 
 }

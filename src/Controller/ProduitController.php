@@ -12,17 +12,16 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ProduitController extends AbstractController
 {
-    #[Route('/produits/liste')]
+    #[Route('/produits/liste', name:'produits')]
     public function index(PersistenceManagerRegistry $doctrine): Response
     {
-        $entityManager = $doctrine->getManager();
-        $produits = $entityManager->getRepository(Produit::class)->findAll();
+        $produits = $doctrine->getManager()->getRepository(Produit::class)->findAll();
         return $this->render('produit/liste_produits.html.twig', [
             'produits' => $produits,
         ]);
     }
 
-   #[Route('/produits/nouveau')]
+   #[Route('/produits/nouveau', name:'nouveau_produit')]
    public function new(Request $request, PersistenceManagerRegistry $doctrine): Response
    {
         $produit = new Produit();
@@ -36,18 +35,16 @@ class ProduitController extends AbstractController
             $entityManager->persist($produit);
             $entityManager->flush();
 
-            return $this->redirectToRoute('/produits/nouveau'); // A modifier
+            return $this->redirectToRoute('produits'); // A modifier
         }
 
         return $this->render("produit/nouveau_produit.html.twig", ["form" => $form,]);
    }
 
-   #[Route('/produits/{id}')]
+   #[Route('/produits/afficher/{id}', name:'afficher_produit_avec_id')]
     public function show(PersistenceManagerRegistry $doctrine, int $id): Response
     {
-        $entityManager = $doctrine->getManager();
-
-        $produit = $entityManager->getRepository(Produit::class)->find($id);
+        $produit = $doctrine->getManager()->getRepository(Produit::class)->find($id);
 
         if (!$produit) {
             return $this->render('produit/produit_non_trouve.html.twig');
@@ -56,5 +53,24 @@ class ProduitController extends AbstractController
         return $this->render('produit/produit_trouve.html.twig', ['produit' => $produit,]);
     }
 
+   
+    #[Route('/produits/modifier/{id}', name:'modifier_produit_avec_id')]
+    public function update(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
+    {
+        $produit = $doctrine->getManager()->getRepository(Produit::class)->find($id);
 
+        if(!$produit){
+            return $this->render('produit/produit_non_trouve.html.twig');
+        }
+
+        $form = $this->createForm(ProduitType::class, $produit);
+        $form->handleRequest($request);
+
+        if($form->isSubmitted() && $form->isValid()) {
+            $doctrine->getManager()->flush();
+            return $this->redirectToRoute('afficher_produit_avec_id', ['id' => $produit->getId()]);
+        }
+
+        return $this->render("produit/modifier_produit.html.twig", ["form" => $form,]);
+    }
 }
