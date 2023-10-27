@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Categorie;
+use App\Entity\Produit;
 use App\Form\Type\CategorieType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
@@ -72,6 +73,31 @@ class CategorieController extends AbstractController
         }
 
         return $this->render("categorie/modifier_categorie.html.twig", ["form" => $form,]);
+    }
+
+    #[Route('/categories/supprimer/{id}', name:'supprimer_categorie_avec_id')]
+    public function delete(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
+    {
+
+        $entityManager = $doctrine->getManager();
+
+        $defaultCategorie = $entityManager->getRepository(Categorie::class)->findOneBy(['nom' => 'Default']); // cas null à considérer
+        $categorie = $entityManager->getRepository(Categorie::class)->find($id);
+
+        if(!$categorie){
+            return $this->render('categorie/categorie_non_trouve.html.twig');
+        }
+
+        $produits = $entityManager->getRepository(Produit::class)->findBy(['categorie' => $categorie]);
+        foreach ($produits as $produit) {
+            $produit->setCategorie($defaultCategorie);
+            $entityManager->persist($produit);
+        }
+        
+        $entityManager->remove($categorie);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('categories');
     }
 
 }

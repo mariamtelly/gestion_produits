@@ -73,4 +73,20 @@ class ProduitController extends AbstractController
 
         return $this->render("produit/modifier_produit.html.twig", ["form" => $form,]);
     }
+
+    #[Route('/produits/supprimer/{id}', name:'supprimer_produit_avec_id')]
+    public function delete(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
+    {
+        $entityManager = $doctrine->getManager();
+        $produit = $entityManager->getRepository(Produit::class)->find($id);
+
+        if(!$produit){
+            return $this->render('produit/produit_non_trouve.html.twig');
+        }
+
+        $entityManager->remove($produit);
+        $entityManager->flush();
+
+        return $this->redirectToRoute('produits');
+    }
 }
