@@ -14,11 +14,11 @@ use Symfony\Component\HttpFoundation\Request;
 
 class CategorieController extends AbstractController
 {
-    #[Route('/categories/liste', name: 'categories')]
+    #[Route('/categories', name: 'categories')]
     public function index(PersistenceManagerRegistry $doctrine): Response
     {
         $categories = $doctrine->getManager()->getRepository(Categorie::class)->findAll();
-        return $this->render('categorie/liste_categories.html.twig', [
+        return $this->render('categorie/all.html.twig', [
             'categories' => $categories,
         ]);
     }
@@ -40,28 +40,28 @@ class CategorieController extends AbstractController
             return $this->redirectToRoute('categories'); // A modifier
         }
 
-        return $this->render("categorie/nouvelle_categorie.html.twig", ["form" => $form,]);
+        return $this->render("categorie/new.html.twig", ["form" => $form,]);
    }
 
-   #[Route('/categories/afficher/{id}', name:'afficher_categorie_avec_id')]
+   #[Route('/categories/afficher/{id}', name:'afficher_categorie')]
     public function show(PersistenceManagerRegistry $doctrine, int $id): Response
     {
         $categorie =$doctrine->getManager()->getRepository(Categorie::class)->find($id);
 
         if (!$categorie) {
-            return $this->render('categorie/categorie_non_trouve.html.twig');
+            return $this->render('categorie/notFound.html.twig');
         }
 
-        return $this->render('categorie/categorie_trouve.html.twig', ['categorie' => $categorie]);
+        return $this->render('categorie/print.html.twig', ['categorie' => $categorie]);
     }
 
-    #[Route('/categories/modifier/{id}', name:'modifier_categorie_avec_id')]
+    #[Route('/categories/modifier/{id}', name:'modifier_categorie')]
     public function update(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
     {
         $categorie = $doctrine->getManager()->getRepository(Categorie::class)->find($id);
 
         if(!$categorie){
-            return $this->render('categorie/categorie_non_trouve.html.twig');
+            return $this->render('categorie/notFound.html.twig');
         }
 
         $form = $this->createForm(CategorieType::class, $categorie);
@@ -69,13 +69,13 @@ class CategorieController extends AbstractController
 
         if($form->isSubmitted() && $form->isValid()) {
             $doctrine->getManager()->flush();
-            return $this->redirectToRoute('afficher_categorie_avec_id', ['id' => $categorie->getId()]);
+            return $this->redirectToRoute('afficher_categorie', ['id' => $categorie->getId()]);
         }
 
-        return $this->render("categorie/modifier_categorie.html.twig", ["form" => $form,]);
+        return $this->render("categorie/alter.html.twig", ["form" => $form,]);
     }
 
-    #[Route('/categories/supprimer/{id}', name:'supprimer_categorie_avec_id')]
+    #[Route('/categories/supprimer/{id}', name:'supprimer_categorie')]
     public function delete(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
     {
 
@@ -85,7 +85,7 @@ class CategorieController extends AbstractController
         $categorie = $entityManager->getRepository(Categorie::class)->find($id);
 
         if(!$categorie){
-            return $this->render('categorie/categorie_non_trouve.html.twig');
+            return $this->render('categorie/notFound.html.twig');
         }
 
         $produits = $entityManager->getRepository(Produit::class)->findBy(['categorie' => $categorie]);

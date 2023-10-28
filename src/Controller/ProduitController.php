@@ -12,11 +12,12 @@ use Symfony\Component\HttpFoundation\Request;
 
 class ProduitController extends AbstractController
 {
-    #[Route('/produits/liste', name:'produits')]
+    #[Route('/produits', name:'produits')]
     public function index(PersistenceManagerRegistry $doctrine): Response
     {
         $produits = $doctrine->getManager()->getRepository(Produit::class)->findAll();
-        return $this->render('produit/liste_produits.html.twig', [
+    
+        return $this->render('produit/all.html.twig', [
             'produits' => $produits,
         ]);
     }
@@ -38,29 +39,29 @@ class ProduitController extends AbstractController
             return $this->redirectToRoute('produits'); // A modifier
         }
 
-        return $this->render("produit/nouveau_produit.html.twig", ["form" => $form,]);
+        return $this->render("produit/new.html.twig", ["form" => $form,]);
    }
 
-   #[Route('/produits/afficher/{id}', name:'afficher_produit_avec_id')]
+   #[Route('/produits/afficher/{id}', name:'afficher_produit')]
     public function show(PersistenceManagerRegistry $doctrine, int $id): Response
     {
         $produit = $doctrine->getManager()->getRepository(Produit::class)->find($id);
 
         if (!$produit) {
-            return $this->render('produit/produit_non_trouve.html.twig');
+            return $this->render('produit/notFound.html.twig');
         }
 
-        return $this->render('produit/produit_trouve.html.twig', ['produit' => $produit,]);
+        return $this->render('produit/print.html.twig', ['produit' => $produit,]);
     }
 
    
-    #[Route('/produits/modifier/{id}', name:'modifier_produit_avec_id')]
+    #[Route('/produits/modifier/{id}', name:'modifier_produit')]
     public function update(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
     {
         $produit = $doctrine->getManager()->getRepository(Produit::class)->find($id);
 
         if(!$produit){
-            return $this->render('produit/produit_non_trouve.html.twig');
+            return $this->render('produit/notFound.html.twig');
         }
 
         $form = $this->createForm(ProduitType::class, $produit);
@@ -68,20 +69,20 @@ class ProduitController extends AbstractController
 
         if($form->isSubmitted() && $form->isValid()) {
             $doctrine->getManager()->flush();
-            return $this->redirectToRoute('afficher_produit_avec_id', ['id' => $produit->getId()]);
+            return $this->redirectToRoute('afficher_produit', ['id' => $produit->getId()]);
         }
 
-        return $this->render("produit/modifier_produit.html.twig", ["form" => $form,]);
+        return $this->render("produit/alter.html.twig", ["form" => $form,]);
     }
 
-    #[Route('/produits/supprimer/{id}', name:'supprimer_produit_avec_id')]
-    public function delete(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
+    #[Route('/produits/supprimer/{id}', name:'supprimer_produit')]
+    public function delete(PersistenceManagerRegistry $doctrine, int $id): Response
     {
         $entityManager = $doctrine->getManager();
         $produit = $entityManager->getRepository(Produit::class)->find($id);
 
         if(!$produit){
-            return $this->render('produit/produit_non_trouve.html.twig');
+            return $this->render('produit/notFound.html.twig');
         }
 
         $entityManager->remove($produit);

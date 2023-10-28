@@ -9,17 +9,13 @@
         <tr>
             <th>ID</th>
             <th>Nom</th>
-            <!--<th>Description</th>
-            <th>Prix</th>
-            <th>Quantité en stock</th>
-            <th>Catégorie</th>
-            <th>Date de création</th>
-            <th>Dernière mise à jour</th>-->
+            <th>Prix<th>
         </tr>
         {% for produit in produits %}
             <tr>
                 <td>{{ produit.id }}</td>
                 <td>{{ produit.nom }}</td>
+                <td>{{ produit.prix }}</td>
             </tr>
         {% endfor %}
     </table>
