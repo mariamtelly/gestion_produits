@@ -78,14 +78,20 @@ class GlobalController extends AbstractController
     }
 
     #[Route('/produits/show/{produitName}', name: 'produit')]
-    public function showProduit(Request $request, ProduitRepository $produitRepository, PersistenceManagerRegistry $doctrine): Response
+    public function showProduit(Request $request, CategorieRepository $categorieRepository, ProduitRepository $produitRepository, PersistenceManagerRegistry $doctrine): Response
     {
         $produit = $produitRepository->findOneBy(['nom' => $request->get('produitName')]);
         $produit->incrementNombresDeVues();
         
         $doctrine->getManager()->flush($produit);
+
+        $categories = $categorieRepository->findAll();
+
         
-        return $this->render('product-details.html.twig', ['produit' => $produit]);
+        return $this->render('product-details.html.twig', [
+            'produit' => $produit, 
+            'categories' => $categories,
+        ]);
     }
 
     #[Route('/panier', name: 'panier')]
