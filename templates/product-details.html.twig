@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails Produits{% endblock %}
+
+{% block body %} 
+    <h1>Voici le produit que vous cherchiez!<h1>
+    <p><h5>ID : </h5>{{ produit.id }}</p>
+    <p><h5>Nom : </h5>{{ produit.nom }}</p>
+    <p><h5>Description : </h5>{{ produit.description }}</p>
+    <p><h5>Prix : </h5>{{ produit.prix }}</p>
+    <p><h5>Quantité en stock : </h5>{{ produit.quantiteEnStock }}</p>
+    <p><h5>Catégorie : </h5>{{ produit.categorie.nom }}</p>
+    <p><h5>Date de création : </h5>{{ produit.dateCreation|date('Y-m-d H:i:s') }}</p>
+    <p><h5>Date de mise à jour : </h5>{{ produit.dateMiseAJour|date('Y-m-d H:i:s') }}</p>
+    <p><h5>Nombre de vues : </h5>{{ produit.nombreDeVues }}</p>
+{% endblock %}

@@ -8,7 +8,9 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Entity\Categorie;
 
 
+
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
+
 class Produit
 {
     #[ORM\Id]
@@ -28,6 +30,9 @@ class Produit
     #[ORM\Column]
     private ?int $quantiteEnStock = null;
 
+    #[ORM\Column]
+    private ?int $nombreDeVues = 0;
+
     #[ORM\ManyToOne(targetEntity: Categorie::class, inversedBy: 'products')]
     private ?Categorie $categorie = null;
 
@@ -36,6 +41,11 @@ class Produit
 
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $dateMiseAJour = null;
+
+    #[ORM\ManyToOne(targetEntity: Badge::class)]
+    private ?Badge $badge;
+
+
 
     public function getId(): ?int
     {
@@ -90,6 +100,25 @@ class Produit
         return $this;
     }
 
+    public function getNombreDeVues(): ?int
+    {
+        return $this->nombreDeVues;
+    }
+
+    public function setNombreDeVues(int $nombreDeVues): static
+    {
+        $this->nombreDeVues = $nombreDeVues;
+
+        return $this;
+    }
+
+    public function incrementNombresDeVues(): static
+    {
+        $this->nombreDeVues = $this->nombreDeVues + 1;
+        
+        return $this;
+    }
+
     public function getCategorie(): ?Categorie
     {
         return $this->categorie;
@@ -98,6 +127,18 @@ class Produit
     public function setCategorie(?Categorie $categorie): self
     {
         $this->categorie = $categorie;
+
+        return $this;
+    }
+
+    public function getBadge(): ?Badge
+    {
+        return $this->badge;
+    }
+
+    public function setBadge(?Badge $badge): self
+    {
+        $this->badge = $badge;
 
         return $this;
     }
