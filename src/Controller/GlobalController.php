@@ -89,15 +89,53 @@ class GlobalController extends AbstractController
     }
 
     #[Route('/panier', name: 'panier')]
-    public function showCart(CategorieRepository $categorieRepository, ProduitRepository $produitRepository): Response
+    public function showCart(CategorieRepository $categorieRepository, Request $request, ProduitRepository $produitRepository): Response
     {
         $categories = $categorieRepository->findAll();
-        $achats = $produitRepository->findRandomProducts(4);
+        $panier = $request->getSession()->get('panier', []);
+
+        $panierBonFormat = [];
+
+        foreach ($panier as $produitId => $qte)
+        {
+            $produit = $produitRepository->find($produitId);
+
+            if($produit)
+            {
+                $panierBonFormat[] = [
+                    'produit' => $produit,
+                    'qte' => $qte,
+                ];
+            }
+        }
 
         return $this->render('cart.html.twig', [
             'categories' => $categories,
-            'achats' => $achats,
+            'panier' => $panierBonFormat,
         ]);
+    }
+
+    #[Route('/ajouter/{produitName}', name: 'ajouter-produit-panier')]
+    public function addToCart(Request $request, ProduitRepository $produitRepository): Response
+    {
+        $session = $request->getSession();
+        $panier = $session->get('panier', []);
+
+        $produit = $produitRepository->findOneBy(['nom' => $request->get('produitName')]);
+
+        if(is_array($panier) && array_key_exists($produit->getId(), $panier))
+        {
+            $panier[$produit->getId()] += 1;
+        }
+        else
+        {
+            $panier[$produit->getId()] = 1;
+        }
+
+        
+        $session->set('panier', $panier);
+
+        return $this->redirectToRoute('panier');
     }
 
     #[Route('/facturation', name: 'facturation')]

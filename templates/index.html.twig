@@ -347,7 +347,7 @@
 																		<a title="Compare" href="#"><i class="ti-bar-chart-alt"></i><span>Ajouter à comparer</span></a>
 																	</div>
 																	<div class="product-action-2">
-																		<a title="Ajouter au panier" href="#">Ajouter au panier</a>
+																		<a title="Ajouter au panier" href="{{ path('ajouter-produit-panier', {'produitName': produit.nom}) }}">Ajouter au panier</a>
 																	</div>
 																</div>
 															</div>
@@ -443,7 +443,7 @@
 											<a title="Compare" href="#"><i class="ti-bar-chart-alt"></i><span>Comparer</span></a>
 										</div>
 										<div class="product-action-2">
-											<a title="Add to cart" href="#">Ajouter au panier</a>
+											<a title="Add to cart" href="{{ path('ajouter-produit-panier', {'produitName': produitPopulaire.nom}) }}">Ajouter au panier</a>
 										</div>
 									</div>
 								</div>
@@ -485,7 +485,7 @@
 								<div class="col-lg-6 col-md-6 col-12">
 									<div class="list-image overlay">
 										<img src="https://via.placeholder.com/115x140" alt="#">
-										<a href="#" class="buy"><i class="fa fa-shopping-bag"></i></a>
+										<a href="{{ path('ajouter-produit-panier', {'produitName': produitRandom.nom}) }}" class="buy"><i class="fa fa-shopping-bag"></i></a>
 									</div>
 								</div>
 								<div class="col-lg-6 col-md-6 col-12 no-padding">
@@ -577,7 +577,7 @@
 								<div class="col-lg-6 col-md-6 col-12">
 									<div class="list-image overlay">
 										<img src="https://via.placeholder.com/115x140" alt="#">
-										<a href="#" class="buy"><i class="fa fa-shopping-bag"></i></a>
+										<a href="{{ path('ajouter-produit-panier', {'produitName': produitPlusVu.nom}) }}" class="buy"><i class="fa fa-shopping-bag"></i></a>
 									</div>
 								</div>
 								<div class="col-lg-6 col-md-6 col-12 no-padding">
