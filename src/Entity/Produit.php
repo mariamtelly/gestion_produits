@@ -10,7 +10,6 @@ use App\Entity\Categorie;
 
 
 #[ORM\Entity(repositoryClass: ProduitRepository::class)]
-
 class Produit
 {
     #[ORM\Id]
@@ -45,6 +44,9 @@ class Produit
     #[ORM\ManyToOne(targetEntity: Badge::class)]
     private ?Badge $badge;
 
+
+    #[ORM\Column(type:"string", nullable: true)]
+    private $imageName = null;
 
 
     public function getId(): ?int
@@ -164,6 +166,17 @@ class Produit
     {
         $this->dateMiseAJour = $dateMiseAJour;
 
+        return $this;
+    }
+
+    public function getImageName() : ?string
+    {
+       return $this->imageName;
+    }
+
+    public function setImageName(?string $newImageName): static
+    {
+        $this->imageName = $newImageName;
         return $this;
     }
 }

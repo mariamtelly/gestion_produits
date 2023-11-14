@@ -13,6 +13,7 @@
         "doctrine/doctrine-migrations-bundle": "^3.2",
         "doctrine/orm": "^2.16",
         "knplabs/knp-paginator-bundle": "^6.2",
+        "liip/imagine-bundle": "^2.12",
         "pagerfanta/doctrine-orm-adapter": "^4.2",
         "symfony/asset": "6.3.*",
         "symfony/console": "6.3.*",

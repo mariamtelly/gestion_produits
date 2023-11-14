@@ -8,7 +8,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <!-- Title Tag  -->
-        <title>Eshop - product details</title>
+        <title>Eshop - articles de la catégorie {{articleCategorieName}}</title>
         <!-- Favicon -->
         <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
         <!-- Web Font -->
@@ -41,6 +41,11 @@
         <link rel="stylesheet" href="{{ asset('css/reset.css') }}">
         <link rel="stylesheet" href="{{ asset('style.css') }}">
         <link rel="stylesheet" href="{{ asset('css/responsive.css') }}">
+        <style>
+            .lire-plus:hover {
+                color: #f6931d;
+            }
+        </style>
     </head>
 
     <body class="js">
@@ -233,28 +238,22 @@
 					<table class="table shopping-summery">
 						<thead>
 							<tr class="main-hading">
-								<th class="text-center">PRODUIT</th>
-								<th class="text-center">NOM - DESCRIPTION</th>
-								<th class="text-center">PRIX</th>
-                                <th class="text-center">AJOUTER AU PANIER</th>
+								<th class="text-center">ARTICLE</th>
+								<th class="text-center">TITRE</th>
+								<th class="text-center">ACTIONS</th>
 							</tr>
 						</thead>
+                       
 						<tbody>
-							<tr>
-								{% if produit.imageName %}
-											<td class="image" data-title="No"><img src="{{ asset('images/produits/thumbnails/' ~ produit.imageName) }}" alt="{{produit.nom}}"></td>
-										{% else %}
-											<td class="image" data-title="No"><img src="https://via.placeholder.com/100x100" alt="{{produit.nom}}"></td>
-										{% endif %}
-								<td class="product-des" data-title="Description">
-									<p class="product-name"><a href="#">{{produit.nom}}</a></p>
-									<p class="product-des">{{produit.description}}</p>
-								</td>
-								<td class="price" data-title="Price"><span>{{produit.prix}} </span></td>
-                                <td>
-									<a title="Ajouter au panier" href="{{ path('ajouter-produit-panier', {'produitName': produit.nom}) }}">Ajouter au panier</a>
-                                </td>
-							</tr>
+                             {% for article in articlesParCategorie %}
+								<tr>
+									<td class="image" data-title="No"><img src="https://via.placeholder.com/100x100" alt="#"></td>
+									<td class="product-des" data-title="Description">
+										<p class="product-name"><a href="{{ path('article', {'articleName': article.titre}) }}">{{article.titre}}</a></p>
+									</td>
+									<td data-title="Price"><a href="{{ path('article', {'articleName': article.titre}) }}">Lire Plus</a></td>
+								</tr>
+                            {% endfor %}
 						</tbody>
 					</table>
 					<!--/ End Shopping Summery -->

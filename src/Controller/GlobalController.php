@@ -19,7 +19,7 @@ use App\Entity\ArticleCategorie;
 use App\Form\Type\ArticleCategorieType;
 use App\Form\Type\ArticleType;
 use DateTime;
-
+use App\Service\ImageUploader;
 
 
 class GlobalController extends AbstractController
@@ -100,6 +100,8 @@ class GlobalController extends AbstractController
         $categories = $categorieRepository->findAll();
         $panier = $request->getSession()->get('panier', []);
 
+        $sousTotal = $request->getSession()->get('sousTotal', 0);
+
         $panierBonFormat = [];
 
         foreach ($panier as $produitId => $qte)
@@ -111,6 +113,7 @@ class GlobalController extends AbstractController
                 $panierBonFormat[] = [
                     'produit' => $produit,
                     'qte' => $qte,
+                    'total' => $qte * $produit->getPrix(),
                 ];
             }
         }
@@ -118,14 +121,16 @@ class GlobalController extends AbstractController
         return $this->render('cart.html.twig', [
             'categories' => $categories,
             'panier' => $panierBonFormat,
+            'sousTotal' => $sousTotal,
         ]);
     }
 
-    #[Route('/ajouter/{produitName}', name: 'ajouter-produit-panier')]
+    #[Route('/ajouter-produit/{produitName}', name: 'ajouter-produit-panier')]
     public function addToCart(Request $request, ProduitRepository $produitRepository): Response
     {
         $session = $request->getSession();
         $panier = $session->get('panier', []);
+        $sousTotal = $session->get('sousTotal', 0);
 
         $produit = $produitRepository->findOneBy(['nom' => $request->get('produitName')]);
 
@@ -138,10 +143,76 @@ class GlobalController extends AbstractController
             $panier[$produit->getId()] = 1;
         }
 
+        $sousTotal += $produit->getPrix();
+
         
         $session->set('panier', $panier);
+        $session->set('sousTotal', $sousTotal);
+        return $this->redirectToRoute('panier');
+    }
+
+    #[Route('/supprimer-produit/{produitId}', name: 'supprimer-produit')]
+    public function deleteProduitFromCart(Request $request, ProduitRepository $produitRepository): Response
+    {
+        $session = $request->getSession();
+        $panier = $session->get('panier', []);
+
+        $id = $request->get('produitId');
+        $nouveauPanier = [];
+        $nouveauSousTotal = 0;
+        
+        foreach ($panier as $produitId => $qte)
+        {
+            if($produitId !== $id){
+                $nouveauPanier[$produitId] = $qte;
+                $nouveauSousTotal += $qte * $produitRepository->find($produitId)->getPrix();
+            }
+        }
+
+        $session->set('panier', $nouveauPanier);
+        $session->set('sousTotal', $nouveauSousTotal);
 
         return $this->redirectToRoute('panier');
+    }
+
+    #[Route('/update-cart')]
+    public function updateCart(Request $request, ProduitRepository $produitRepository) : Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $produitId = $data['produitId'];
+        $action = $data['action'];
+
+        $session = $request->getSession();
+        $panier = $session->get('panier', []);
+        $sousTotal = $session->get('sousTotal', 0);
+
+        $produit = $produitRepository->find($produitId);
+
+        if(is_array($panier) && array_key_exists($produitId, $panier))
+        {
+            if($action === 'increment')
+            {
+                $panier[$produitId] += 1;
+                $sousTotal += $produit->getPrix();
+            }
+            elseif($action === 'decrement')
+            {
+                $panier[$produitId] -= 1;
+                $sousTotal -= $produit->getPrix();
+            }
+        }
+
+        $session->set('panier', $panier);
+        $session->set('sousTotal', $sousTotal);
+
+        //return $this->redirectToRoute('panier');
+
+        return new JsonResponse([
+            'produitId' => $produitId,
+            'nouvelleQte' => $panier[$produitId],
+            'nouveauTotal' => $panier[$produitId] * $produit->getPrix(),
+            'sousTotal' => $sousTotal,
+        ]);
     }
 
     #[Route('/facturation', name: 'facturation')]
@@ -162,6 +233,35 @@ class GlobalController extends AbstractController
 
         return $this->render('blog-single-sidebar.html.twig', [
             'categories' => $categories,
+            'articleCategories' => $articleCategories,
+            'articlesRecents' => $articlesRecents,
+        ]);
+    }
+
+    #[Route('/articles/{articleCategorieName}', name:'articles_par_categorie')]
+    public function showArticleCategorie(Request $request, CategorieRepository $categorieRepository, ArticleRepository $articleRepository, ArticleCategorieRepository $articleCategorieRepository): Response
+    {
+        $articleCategorie = $articleCategorieRepository->findOneBy(['nom' => $request->get('articleCategorieName')]);
+
+        return $this->render('articles-by-category.html.twig', [
+            'articleCategorieName' => $request->get('articleCategorieName'),
+            'articlesParCategorie' => $articleRepository->findArticlesByCategorie($articleCategorie),
+            'categories' => $categorieRepository->findAll(),
+        ]);
+    }
+
+    #[Route('/articles/show/{articleName}', name: 'article')]
+    public function showArticle(Request $request, CategorieRepository $categorieRepository, ArticleRepository $articleRepository, ArticleCategorieRepository $articleCategorieRepository): Response
+    {
+        $categories = $categorieRepository->findAll();
+        $article = $articleRepository->findOneBy(['titre' => $request->get("articleName")]);
+        $articleCategories = $articleCategorieRepository->findAll();
+        $articlesRecents = $articleRepository->findRecentArticles(3);
+
+
+        return $this->render('article-details.html.twig', [
+            'categories' => $categories,
+            'article' => $article,
             'articleCategories' => $articleCategories,
             'articlesRecents' => $articlesRecents,
         ]);
@@ -196,18 +296,26 @@ class GlobalController extends AbstractController
             'articleCategories' => $articleCategories,
         ]);
     }
+
  /* ------------- Produits ------------- */
   
-    #[Route('/produits/nouveau')]
-   public function nouveauProduit(Request $request, PersistenceManagerRegistry $doctrine): Response
-   {
+    #[Route('/produits/create/nouveau')]
+    public function nouveauProduit(Request $request, PersistenceManagerRegistry $doctrine, ImageUploader $imageUploader): Response
+    {
         $produit = new Produit();
         $form = $this->createForm(ProduitType::class, $produit);
 
         $form->handleRequest($request);
-        if($form->isSubmitted() && $form->isValid()) {
+        if($form->isSubmitted() && $form->isValid()) 
+        {
             $produit = $form->getData();
-            $produit->setImageName($produit->getImageFile()->getFileName());
+
+            $uploadedImage = $form->get('imageName')->getData();
+            if($uploadedImage)
+            {
+                $imageName = $imageUploader->uploadProduct($uploadedImage);
+                $produit->setImageName($imageName);
+            }
 
             $dateActuelle = new DateTime();
 
@@ -222,10 +330,11 @@ class GlobalController extends AbstractController
         }
 
         return $this->render("nouveau.html.twig", ["form" => $form,]);
-   }
+    }
+
 
    #[Route('/produits/modifier/{id}')]
-    public function updateProduit(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
+    public function updateProduit(PersistenceManagerRegistry $doctrine, int $id, Request $request, ImageUploader $imageUploader): Response
     {
         $produit = $doctrine->getManager()->getRepository(Produit::class)->find($id);
 
@@ -237,8 +346,18 @@ class GlobalController extends AbstractController
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid()) {
+
+            $uploadedImage = $form->get('imageName')->getData();
+            if($uploadedImage)
+            {
+                $imageName = $imageUploader->uploadProduct($uploadedImage);
+                $produit->setImageName($imageName);
+            }
+
             $dateActuelle = new DateTime();
             $produit->setDateMiseAJour($dateActuelle);
+
+            $doctrine->getManager()->persist($produit);
             $doctrine->getManager()->flush();
             return $this->redirectToRoute('listes_produits_categories_et_articles');
         }
@@ -247,7 +366,7 @@ class GlobalController extends AbstractController
     }
  
     #[Route('/produits/supprimer/{id}')]
-    public function deleteProduit(PersistenceManagerRegistry $doctrine, int $id): Response
+    public function deleteProduit(PersistenceManagerRegistry $doctrine, int $id, ImageUploader $imageUploader): Response
     {
         $entityManager = $doctrine->getManager();
         $produit = $entityManager->getRepository(Produit::class)->find($id);
@@ -256,16 +375,18 @@ class GlobalController extends AbstractController
             return $this->redirectToRoute('listes_produits_categories_et_articles');
         }
 
+        $imageUploader->delete($produit->getImageFileName());
+
         $entityManager->remove($produit);
         $entityManager->flush();
 
         return $this->redirectToRoute('listes_produits_categories_et_articles');
     }
-    /**------- Fin --------- */
+/**------- Fin --------- */
 
 /* ------------- Categories de Produits ------------- */
   
-    #[Route('/categories/nouveau')]
+    #[Route('/categories/create/nouveau')]
    public function nouvelleCategorie(Request $request, PersistenceManagerRegistry $doctrine): Response
    {
         $categorie = new Categorie();
@@ -337,11 +458,11 @@ class GlobalController extends AbstractController
 
         return $this->redirectToRoute('listes_produits_categories_et_articles');
     }
-    /**------- Fin --------- */
+/**------- Fin --------- */
 
-    /* ------------- Articles ------------- */
+/* ------------- Articles ------------- */
   
-    #[Route('/articles/nouveau')]
+    #[Route('/articles/create/nouveau')]
     public function nouvelArticle(Request $request, PersistenceManagerRegistry $doctrine): Response
     {
         $article = new Article();
@@ -380,6 +501,10 @@ class GlobalController extends AbstractController
         $form->handleRequest($request);
 
         if($form->isSubmitted() && $form->isValid()) {
+            $dateActuelle = new DateTime();
+            $article->setDateMiseAJour($dateActuelle);
+
+            $doctrine->getManager()->persist($article);
             $doctrine->getManager()->flush();
             return $this->redirectToRoute('listes_produits_categories_et_articles');
         }
@@ -409,7 +534,7 @@ class GlobalController extends AbstractController
 
     /* ------------- Categories d'Articles ------------- */
 
-    #[Route('/articles-categories/nouveau')]
+    #[Route('/articles-categories/create/nouveau')]
    public function nouvelleCategorieArticle(Request $request, PersistenceManagerRegistry $doctrine): Response
    {
         $articleCategorie = new ArticleCategorie();

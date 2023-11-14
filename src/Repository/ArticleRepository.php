@@ -41,6 +41,27 @@ class ArticleRepository extends ServiceEntityRepository
         return $query->getResult();
     }
 
+    public function findArticlesByCategorie($articleCategorie, $maxResults = 0): array
+    {
+        $entityManager = $this->getEntityManager();
+
+        $query = $entityManager->createQuery(
+            '
+            SELECT p
+            FROM App\Entity\Article p
+            WHERE p.articleCategorie = :articleCategorie
+            ORDER BY p.dateMiseAJour DESC
+            '
+        )->setParameters(['articleCategorie' => $articleCategorie]);
+
+        if($maxResults > 0)
+        {
+            $query->setMaxResults($maxResults);
+        }
+
+        return $query->getResult();
+    }
+
 //    /**
 //     * @return Article[] Returns an array of Article objects
 //     */

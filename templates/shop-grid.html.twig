@@ -397,14 +397,19 @@
 									<div class="single-product">
 										<div class="product-img">
 											<a href="{{ path('produit', {'produitName': produit.nom}) }}">
-												<img class="default-img" src="https://via.placeholder.com/550x750" alt="#">
-												<img class="hover-img" src="https://via.placeholder.com/550x750" alt="#">
+												{% if produit.imageName %}
+													<img class="default-img" src="{{ asset('images/produits/normals/' ~ produit.imageName) }}" alt="{{ produit.nom }}">
+													<img class="hover-img" src="{{ asset('images/produits/normals/' ~ produit.imageName) }}" alt="{{ produit.nom }}">
+												{% else %}
+													<img class="default-img" src="https://via.placeholder.com/550x750" alt="{{ produit.nom }}">
+													<img class="hover-img" src="https://via.placeholder.com/550x750" alt="{{ produit.nom }}">
+												{% endif %}
 											</a>
 											<div class="button-head">
 												<div class="product-action">
 													<a data-toggle="modal" data-target="#exampleModal" title="Quick View" href="#"><i class=" ti-eye"></i><span>Quick Shop</span></a>
-													<a title="Wishlist" href="#"><i class=" ti-heart "></i><span>Add to Wishlist</span></a>
-													<a title="Compare" href="#"><i class="ti-bar-chart-alt"></i><span>Add to Compare</span></a>
+													<a title="Liste de voeux" href="#"><i class=" ti-heart "></i><span>Ajouter à la liste de voeux</span></a>
+													<a title="Comparer" href="#"><i class="ti-bar-chart-alt"></i><span>Ajouter à la liste de comparaison</span></a>
 												</div>
 												<div class="product-action-2">
 													<a title="Ajouter au panier" href="{{ path('ajouter-produit-panier', {'produitName': produit.nom}) }}">Ajouter au panier</a>
