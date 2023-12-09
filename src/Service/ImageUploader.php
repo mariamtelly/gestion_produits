@@ -71,7 +71,7 @@ class ImageUploader
         return $fichier;
     }
 
-    public function deleteProduct(?string $fichier, ?string $folder = "", ?int $width, ?int $height)
+    public function deleteProduct(?string $fichier, ?int $width, ?int $height, ?string $folder = "")
     {
         if($fichier !== 'default.webp')
         {

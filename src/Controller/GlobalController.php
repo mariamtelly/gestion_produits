@@ -281,25 +281,27 @@ class GlobalController extends AbstractController
     /** fonctions utilitaires */
 
    
-    #[Route('/produits-categories-articles/listes', name: 'listes_produits_categories_et_articles')]
-    public function listesProduitsCategoriesEtArticles(ProduitRepository $produitRepository, CategorieRepository $categorieRepository, ArticleCategorieRepository $articleCategorieRepository, ArticleRepository $articleRepository): Response
+    #[Route('/admin', name: 'admin')]
+    public function listesProduitsCategoriesEtArticles(): Response
     {
-        $produits = $produitRepository->findAll();
-        $categories = $categorieRepository->findAll();
-        $articleCategories = $articleCategorieRepository->findAll();
-        $articles = $articleRepository->findAll();
-
-        return $this->render('liste-produits-categories-articles.html.twig', [
-            'produits' => $produits,
-            'categories' => $categories,
-            'articles' => $articles,
-            'articleCategories' => $articleCategories,
-        ]);
+        return $this->render('admin.html.twig');
     }
 
  /* ------------- Produits ------------- */
-  
-    #[Route('/produits/create/nouveau')]
+
+    #[Route('/admin/produits', name: 'admin-liste-produits')]
+    public function AdminListeProduits(ProduitRepository $produitRepository)
+    {
+        $produits = $produitRepository->findAll();
+
+        return $this->render('admin-produits.html.twig', [
+            'produits' => $produits,
+        ]);
+
+    }
+
+   
+    #[Route('/admin/produits/create/nouveau', name: 'nouveau-produit')]
     public function nouveauProduit(Request $request, PersistenceManagerRegistry $doctrine, ImageUploader $imageUploader): Response
     {
         $produit = new Produit();
@@ -326,20 +328,35 @@ class GlobalController extends AbstractController
             $entityManager->persist($produit);
             $entityManager->flush();
 
-            return $this->redirectToRoute('listes_produits_categories_et_articles'); // A modifier
+            return $this->redirectToRoute('admin-liste-produits'); // A modifier
         }
 
         return $this->render("nouveau.html.twig", ["form" => $form,]);
     }
 
+    #[Route('/admin/afficher-produit/{id}', name: 'afficher-produit')]
+    public function AdminAfficherProduits(ProduitRepository $produitRepository, int $id)
+    {
+        $produit = $produitRepository->find($id);
 
-   #[Route('/produits/modifier/{id}')]
+        if(!$produit){
+            return $this->redirectToRoute('admin-liste-produits');
+        }
+
+        return $this->render('admin-produit.html.twig', [
+            'produit' => $produit,
+        ]);
+
+    }
+
+
+   #[Route('/admin/produits/modifier/{id}', name: 'update-produit')]
     public function updateProduit(PersistenceManagerRegistry $doctrine, int $id, Request $request, ImageUploader $imageUploader): Response
     {
         $produit = $doctrine->getManager()->getRepository(Produit::class)->find($id);
 
         if(!$produit){
-            return $this->redirectToRoute('listes_produits_categories_et_articles');
+            return $this->redirectToRoute('admin-liste-produits');
         }
 
         $form = $this->createForm(ProduitType::class, $produit);
@@ -359,20 +376,20 @@ class GlobalController extends AbstractController
 
             $doctrine->getManager()->persist($produit);
             $doctrine->getManager()->flush();
-            return $this->redirectToRoute('listes_produits_categories_et_articles');
+            return $this->redirectToRoute('admin-liste-produits');
         }
 
         return $this->render("nouveau.html.twig", ["form" => $form,]);
     }
  
-    #[Route('/produits/supprimer/{id}')]
+    #[Route('/admin/produits/supprimer/{id}', name: 'delete-produit')]
     public function deleteProduit(PersistenceManagerRegistry $doctrine, int $id, ImageUploader $imageUploader): Response
     {
         $entityManager = $doctrine->getManager();
         $produit = $entityManager->getRepository(Produit::class)->find($id);
 
         if(!$produit){
-            return $this->redirectToRoute('listes_produits_categories_et_articles');
+            return $this->redirectToRoute('admin-liste-produits');
         }
 
         $imageUploader->delete($produit->getImageFileName());
@@ -380,13 +397,24 @@ class GlobalController extends AbstractController
         $entityManager->remove($produit);
         $entityManager->flush();
 
-        return $this->redirectToRoute('listes_produits_categories_et_articles');
+        return $this->redirectToRoute('admin-liste-produits');
     }
 /**------- Fin --------- */
 
 /* ------------- Categories de Produits ------------- */
+
+    #[Route('/admin/categories', name: 'admin-liste-categories')]
+    public function AdminListeCategories(CategorieRepository $categorieRepository)
+    {
+        $categories = $categorieRepository->findAll();
+
+        return $this->render('admin-categories.html.twig', [
+            'categories' => $categories,
+        ]);
+
+    }
   
-    #[Route('/categories/create/nouveau')]
+    #[Route('/admin/categories/create/nouveau')]
    public function nouvelleCategorie(Request $request, PersistenceManagerRegistry $doctrine): Response
    {
         $categorie = new Categorie();
@@ -406,7 +434,7 @@ class GlobalController extends AbstractController
         return $this->render("nouveau.html.twig", ["form" => $form,]);
    }
 
-   #[Route('/categories/modifier/{id}')]
+   #[Route('/admin/categories/modifier/{id}')]
     public function updateCategorie(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
     {
         $categorie = $doctrine->getManager()->getRepository(Categorie::class)->find($id);
@@ -426,7 +454,7 @@ class GlobalController extends AbstractController
         return $this->render("nouveau.html.twig", ["form" => $form,]);
     }
 
-    #[Route('/categories/supprimer/{id}')]
+    #[Route('/admin/categories/supprimer/{id}')]
     public function deleteCategorie(PersistenceManagerRegistry $doctrine, int $id): Response
     {
 
@@ -461,8 +489,18 @@ class GlobalController extends AbstractController
 /**------- Fin --------- */
 
 /* ------------- Articles ------------- */
+
+    #[Route('/admin/articles', name: 'admin-liste-articles')]
+    public function AdminListeArticles(ArticleRepository $articleRepository)
+    {
+        $articles = $articleRepository->findAll();
+
+        return $this->render('admin-articles.html.twig', [
+            'articles' => $articles,
+        ]);
+    }
   
-    #[Route('/articles/create/nouveau')]
+    #[Route('/admin/articles/create/nouveau')]
     public function nouvelArticle(Request $request, PersistenceManagerRegistry $doctrine): Response
     {
         $article = new Article();
@@ -488,7 +526,7 @@ class GlobalController extends AbstractController
     }
 
 
-   #[Route('/articles/modifier/{id}')]
+   #[Route('/admin/articles/modifier/{id}')]
     public function updateArticle(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
     {
         $article = $doctrine->getManager()->getRepository(Article::class)->find($id);
@@ -512,7 +550,7 @@ class GlobalController extends AbstractController
         return $this->render("nouveau.html.twig", ["form" => $form,]);
     }
 
-    #[Route('/articles/supprimer/{id}')]
+    #[Route('/admin/articles/supprimer/{id}')]
     public function deleteArticle(PersistenceManagerRegistry $doctrine, int $id): Response
     {
 
@@ -534,7 +572,18 @@ class GlobalController extends AbstractController
 
     /* ------------- Categories d'Articles ------------- */
 
-    #[Route('/articles-categories/create/nouveau')]
+    #[Route('/admin/categories-d-articles', name: 'admin-liste-categories-d-articles')]
+    public function AdminListeCategoriesArticles(ArticleCategorieRepository $articleCategorieRepository)
+    {
+        $articleCategories = $articleCategorieRepository->findAll();
+
+        return $this->render('admin-categories-d-articles.html.twig', [
+            'articleCategories' => $articleCategories,
+        ]);
+
+    }
+
+    #[Route('/admin/articles-categories/create/nouveau')]
    public function nouvelleCategorieArticle(Request $request, PersistenceManagerRegistry $doctrine): Response
    {
         $articleCategorie = new ArticleCategorie();
@@ -554,7 +603,7 @@ class GlobalController extends AbstractController
         return $this->render("nouveau.html.twig", ["form" => $form,]);
    }
 
-   #[Route('/articles-categories/modifier/{id}')]
+   #[Route('/admin/articles-categories/modifier/{id}')]
     public function updateArticleCategorie(PersistenceManagerRegistry $doctrine, int $id, Request $request): Response
     {
         $articleCategorie = $doctrine->getManager()->getRepository(ArticleCategorie::class)->find($id);
@@ -574,7 +623,7 @@ class GlobalController extends AbstractController
         return $this->render("nouveau.html.twig", ["form" => $form,]);
     }
 
-    #[Route('/articles-categories/supprimer/{id}')]
+    #[Route('/admin/articles-categories/supprimer/{id}')]
     public function deleteArticleCategorie(PersistenceManagerRegistry $doctrine, int $id): Response
     {
 
